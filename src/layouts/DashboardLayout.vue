@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-100">
-    <!-- Navbar -->
+    <ToastNotification ref="toastRef" />
+
     <nav class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
       <RouterLink to="/dashboard" class="text-xl font-bold text-primary-600">
         TaskFlow
@@ -21,7 +22,6 @@
       </div>
     </nav>
 
-    <!-- Page content -->
     <main class="max-w-6xl mx-auto px-6 py-8">
       <slot />
     </main>
@@ -31,9 +31,12 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
+import { useToast } from "@/composables/useToast";
+import ToastNotification from "@/components/ToastNotification.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
+const { toastRef } = useToast();
 
 function handleLogout() {
   authStore.logout();

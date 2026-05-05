@@ -55,20 +55,6 @@
             />
           </div>
 
-          <div
-            v-if="error"
-            class="bg-red-50 text-red-500 rounded-lg p-3 mb-4 text-sm border border-red-200"
-          >
-            {{ error }}
-          </div>
-
-          <div
-            v-if="success"
-            class="bg-green-50 text-green-600 rounded-lg p-3 mb-4 text-sm border border-green-200"
-          >
-            Profile updated successfully!
-          </div>
-
           <div class="flex gap-3">
             <button
               @click="editing = false"
@@ -134,13 +120,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useUserStore } from "@/stores/user";
+import { useToast } from "@/composables/useToast";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 
 const userStore = useUserStore();
+const { success, error } = useToast();
 
 const editing = ref(false);
-const error = ref(null);
-const success = ref(false);
 const form = ref({ firstName: "", lastName: "" });
 
 const initials = computed(() => {
@@ -159,19 +145,15 @@ function startEditing() {
     lastName: userStore.profile?.lastName ?? "",
   };
   editing.value = true;
-  success.value = false;
-  error.value = null;
 }
 
 async function handleUpdate() {
-  error.value = null;
-  success.value = false;
   try {
     await userStore.updateProfile(form.value);
     editing.value = false;
-    success.value = true;
+    success("Profile updated successfully!");
   } catch (err) {
-    error.value = err.response?.data?.message || "Failed to update profile.";
+    error(err.response?.data?.message || "Failed to update profile.");
   }
 }
 </script>

@@ -1,10 +1,9 @@
 <template>
   <DashboardLayout>
     <!-- Loading -->
-    <div v-if="projectsStore.loading" class="text-center text-gray-400 py-20">
-      Loading project...
+    <div v-if="tasksStore.loading" class="space-y-3">
+      <SkeletonTask v-for="n in 5" :key="n" />
     </div>
-
     <template v-else-if="projectsStore.currentProject">
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
@@ -134,13 +133,6 @@
           />
         </div>
 
-        <div
-          v-if="createError"
-          class="bg-red-50 text-red-500 rounded-lg p-3 mb-4 text-sm border border-red-200"
-        >
-          {{ createError }}
-        </div>
-
         <div class="flex gap-3">
           <button
             @click="showCreateModal = false"
@@ -166,16 +158,18 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useProjectsStore } from "@/stores/projects";
 import { useTasksStore } from "@/stores/tasks";
+import { useToast } from "@/composables/useToast";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
+import SkeletonTask from "@/components/skeletonTask.vue";
 
 const router = useRouter();
 const route = useRoute();
 const projectsStore = useProjectsStore();
 const tasksStore = useTasksStore();
+const { success, error } = useToast();
 
 const showCreateModal = ref(false);
 const creating = ref(false);
-const createError = ref(null);
 const newTask = ref({
   title: "",
   description: "",
@@ -183,6 +177,7 @@ const newTask = ref({
   dueDate: "",
   projectId: route.params.id,
 });
+
 onMounted(() => {
   projectsStore.fetchProjectById(route.params.id);
   tasksStore.fetchByProject(route.params.id);
@@ -190,51 +185,21 @@ onMounted(() => {
 
 async function handleCreateTask() {
   creating.value = true;
-  createError.value = null;
   try {
     await tasksStore.createTask(newTask.value);
     showCreateModal.value = false;
     newTask.value = {
       title: "",
       description: "",
-      priority: 2,
+      priority: "Medium",
       dueDate: "",
       projectId: route.params.id,
     };
+    success("Task created successfully!");
   } catch (err) {
-    createError.value = err.response?.data?.message || "Failed to create task.";
+    error(err.response?.data?.message || "Failed to create task.");
   } finally {
     creating.value = false;
   }
-}
-
-function priorityLabel(priority) {
-  return priority ?? "Unknown";
-}
-
-function statusLabel(status) {
-  return status ?? "Unknown";
-}
-
-function priorityClass(priority) {
-  return (
-    {
-      Low: "bg-gray-100 text-gray-500",
-      Medium: "bg-blue-50 text-blue-500",
-      High: "bg-orange-50 text-orange-500",
-      Critical: "bg-red-50 text-red-500",
-    }[priority] ?? "bg-gray-100 text-gray-500"
-  );
-}
-
-function statusClass(status) {
-  return (
-    {
-      ToDo: "bg-gray-100 text-gray-500",
-      InProgress: "bg-primary-50 text-primary-600",
-      Done: "bg-green-50 text-green-600",
-      Cancelled: "bg-red-50 text-red-500",
-    }[status] ?? "bg-gray-100 text-gray-500"
-  );
 }
 </script>

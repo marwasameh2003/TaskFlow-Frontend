@@ -12,10 +12,12 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="projectsStore.loading" class="text-center text-gray-400 py-20">
-      Loading projects...
+    <div
+      v-if="projectsStore.loading"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      <SkeletonCard v-for="n in 6" :key="n" />
     </div>
-
     <!-- Error -->
     <div v-else-if="projectsStore.error" class="text-center text-red-500 py-20">
       {{ projectsStore.error }}
@@ -88,13 +90,6 @@
           />
         </div>
 
-        <div
-          v-if="createError"
-          class="bg-red-50 text-red-500 rounded-lg p-3 mb-4 text-sm border border-red-200"
-        >
-          {{ createError }}
-        </div>
-
         <div class="flex gap-3">
           <button
             @click="showCreateModal = false"
@@ -119,10 +114,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useProjectsStore } from "@/stores/projects";
+import { useToast } from "@/composables/useToast";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
-
+import SkeletonCard from "@/components/SkeletonCard.vue";
 const router = useRouter();
 const projectsStore = useProjectsStore();
+const { success, error } = useToast();
 
 const showCreateModal = ref(false);
 const creating = ref(false);
@@ -140,9 +137,9 @@ async function handleCreateProject() {
     await projectsStore.createProject(newProject.value);
     showCreateModal.value = false;
     newProject.value = { name: "", description: "" };
+    success("Project created successfully!");
   } catch (err) {
-    createError.value =
-      err.response?.data?.message || "Failed to create project.";
+    error(err.response?.data?.message || "Failed to create project.");
   } finally {
     creating.value = false;
   }

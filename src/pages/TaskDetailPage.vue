@@ -139,13 +139,14 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTasksStore } from "@/stores/tasks";
 import { useCommentsStore } from "@/stores/comments";
-import { tasksApi } from "@/api/tasks";
+import { useToast } from "@/composables/useToast";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 
 const router = useRouter();
 const route = useRoute();
 const tasksStore = useTasksStore();
 const commentsStore = useCommentsStore();
+const { success, error } = useToast();
 
 const task = ref(null);
 const loading = ref(false);
@@ -156,7 +157,6 @@ const addingComment = ref(false);
 onMounted(async () => {
   loading.value = true;
   try {
-    // get task from store instead of API call
     task.value = tasksStore.tasks.find((t) => t.id === route.params.id);
     selectedStatus.value = task.value.status;
     await commentsStore.fetchByTask(route.params.id);
@@ -164,9 +164,15 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
 async function handleUpdateStatus() {
-  await tasksStore.updateTaskStatus(route.params.id, selectedStatus.value);
-  task.value.status = selectedStatus.value;
+  try {
+    await tasksStore.updateTaskStatus(route.params.id, selectedStatus.value);
+    task.value.status = selectedStatus.value;
+    success("Status updated successfully!");
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to update status.");
+  }
 }
 
 async function handleAddComment() {
@@ -177,34 +183,20 @@ async function handleAddComment() {
       content: newComment.value,
     });
     newComment.value = "";
+    success("Comment added!");
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to add comment.");
   } finally {
     addingComment.value = false;
   }
 }
 
 async function handleDeleteComment(id) {
-  await commentsStore.deleteComment(id);
-}
-
-function priorityClass(priority) {
-  return (
-    {
-      Low: "bg-gray-100 text-gray-500",
-      Medium: "bg-blue-50 text-blue-500",
-      High: "bg-orange-50 text-orange-500",
-      Critical: "bg-red-50 text-red-500",
-    }[priority] ?? "bg-gray-100 text-gray-500"
-  );
-}
-
-function statusClass(status) {
-  return (
-    {
-      ToDo: "bg-gray-100 text-gray-500",
-      InProgress: "bg-primary-50 text-primary-600",
-      Done: "bg-green-50 text-green-600",
-      Cancelled: "bg-red-50 text-red-500",
-    }[status] ?? "bg-gray-100 text-gray-500"
-  );
+  try {
+    await commentsStore.deleteComment(id);
+    success("Comment deleted!");
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to delete comment.");
+  }
 }
 </script>
