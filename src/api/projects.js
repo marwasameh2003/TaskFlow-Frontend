@@ -16,4 +16,7 @@ export const projectsApi = {
   archive(id) {
     return api.patch(`/projects/${id}/archive`);
   },
+  getArchived() {
+    return api.get("/projects/archived");
+  },
 };

@@ -24,8 +24,13 @@ export const useTasksStore = defineStore("tasks", {
     },
 
     async createTask(data) {
-      const response = await tasksApi.create(data);
-      this.tasks.push(response.data.data);
+      try {
+        const response = await tasksApi.create(data);
+        this.tasks.push(response.data.data);
+      } catch (err) {
+        console.log("Error response:", err.response?.data);
+        throw err;
+      }
     },
 
     async updateTaskStatus(id, status) {

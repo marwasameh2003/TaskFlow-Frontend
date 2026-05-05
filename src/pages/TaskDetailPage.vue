@@ -65,6 +65,14 @@
             <option value="Done">Done</option>
             <option value="Cancelled">Cancelled</option>
           </select>
+
+          <!-- Delete Task Button -->
+          <button
+            @click="handleDeleteTask"
+            class="ml-auto text-sm text-red-400 hover:text-red-600 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-50 transition"
+          >
+            Delete Task
+          </button>
         </div>
       </div>
 
@@ -174,7 +182,16 @@ async function handleUpdateStatus() {
     error(err.response?.data?.message || "Failed to update status.");
   }
 }
-
+async function handleDeleteTask() {
+  if (!confirm("Are you sure you want to delete this task?")) return;
+  try {
+    await tasksStore.deleteTask(route.params.id);
+    success("Task deleted!");
+    router.back();
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to delete task.");
+  }
+}
 async function handleAddComment() {
   addingComment.value = true;
   try {
@@ -198,5 +215,30 @@ async function handleDeleteComment(id) {
   } catch (err) {
     error(err.response?.data?.message || "Failed to delete comment.");
   }
+}
+function priorityClass(priority) {
+  return (
+    {
+      1: "bg-gray-100 text-gray-500",
+      2: "bg-blue-50 text-blue-500",
+      3: "bg-orange-50 text-orange-500",
+      4: "bg-red-50 text-red-500",
+      Low: "bg-gray-100 text-gray-500",
+      Medium: "bg-blue-50 text-blue-500",
+      High: "bg-orange-50 text-orange-500",
+      Critical: "bg-red-50 text-red-500",
+    }[priority] ?? "bg-gray-100 text-gray-500"
+  );
+}
+
+function statusClass(status) {
+  return (
+    {
+      ToDo: "bg-gray-100 text-gray-500",
+      InProgress: "bg-primary-50 text-primary-600",
+      Done: "bg-green-50 text-green-600",
+      Cancelled: "bg-red-50 text-red-500",
+    }[status] ?? "bg-gray-100 text-gray-500"
+  );
 }
 </script>

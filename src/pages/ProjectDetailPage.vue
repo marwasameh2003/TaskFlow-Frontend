@@ -115,10 +115,10 @@
             v-model="newTask.priority"
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-500 transition"
           >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
+            <option :value="1">Low</option>
+            <option :value="2">Medium</option>
+            <option :value="3">High</option>
+            <option :value="4">Critical</option>
           </select>
         </div>
 
@@ -173,11 +173,19 @@ const creating = ref(false);
 const newTask = ref({
   title: "",
   description: "",
-  priority: "Medium",
+  priority: "2",
   dueDate: "",
   projectId: route.params.id,
 });
 
+// and reset after creation:
+newTask.value = {
+  title: "",
+  description: "",
+  priority: 2,
+  dueDate: "",
+  projectId: route.params.id,
+};
 onMounted(() => {
   projectsStore.fetchProjectById(route.params.id);
   tasksStore.fetchByProject(route.params.id);
@@ -201,5 +209,40 @@ async function handleCreateTask() {
   } finally {
     creating.value = false;
   }
+}
+function priorityLabel(priority) {
+  return (
+    { 1: "Low", 2: "Medium", 3: "High", 4: "Critical" }[priority] ?? priority
+  );
+}
+
+function statusLabel(status) {
+  return status ?? "Unknown";
+}
+
+function priorityClass(priority) {
+  return (
+    {
+      1: "bg-gray-100 text-gray-500",
+      2: "bg-blue-50 text-blue-500",
+      3: "bg-orange-50 text-orange-500",
+      4: "bg-red-50 text-red-500",
+      Low: "bg-gray-100 text-gray-500",
+      Medium: "bg-blue-50 text-blue-500",
+      High: "bg-orange-50 text-orange-500",
+      Critical: "bg-red-50 text-red-500",
+    }[priority] ?? "bg-gray-100 text-gray-500"
+  );
+}
+
+function statusClass(status) {
+  return (
+    {
+      ToDo: "bg-gray-100 text-gray-500",
+      InProgress: "bg-primary-50 text-primary-600",
+      Done: "bg-green-50 text-green-600",
+      Cancelled: "bg-red-50 text-red-500",
+    }[status] ?? "bg-gray-100 text-gray-500"
+  );
 }
 </script>
