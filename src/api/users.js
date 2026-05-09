@@ -8,4 +8,7 @@ export const usersApi = {
   updateProfile(data) {
     return api.put("/users/me", data);
   },
+  getAllUsers() {
+    return api.get("/users");
+  },
 };

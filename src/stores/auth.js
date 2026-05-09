@@ -1,6 +1,12 @@
 import { defineStore } from "pinia";
 import { authApi } from "@/api/auth";
 
+// decode JWT payload without a library
+function parseJwt(token) {
+  const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+  return JSON.parse(atob(base64));
+}
+
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null,
@@ -10,6 +16,15 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
+    isAdmin: (state) => {
+      if (!state.token) return false;
+      const payload = parseJwt(state.token);
+      return (
+        payload[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ] === "Admin"
+      );
+    },
   },
 
   actions: {
@@ -46,7 +61,3 @@ export const useAuthStore = defineStore("auth", {
     },
   },
 });
-
-// state is the data that the store holds
-// getters are computed properties based on the state
-// actions are functions that change the state

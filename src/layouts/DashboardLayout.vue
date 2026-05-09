@@ -7,6 +7,15 @@
         TaskFlow
       </RouterLink>
       <div class="flex items-center gap-4">
+        <!-- Admin link — only visible to admins -->
+        <RouterLink
+          v-if="authStore.isAdmin"
+          to="/admin"
+          class="text-xs bg-primary-600 text-white px-3 py-1 rounded-full hover:bg-primary-500 transition font-medium"
+        >
+          Admin Panel
+        </RouterLink>
+
         <RouterLink
           to="/profile"
           class="text-gray-500 hover:text-primary-600 transition"
