@@ -5,6 +5,7 @@ export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null,
     token: localStorage.getItem("token") || null,
+    refreshToken: localStorage.getItem("refreshToken") || null,
   }),
 
   getters: {
@@ -14,9 +15,22 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     async login(credentials) {
       const response = await authApi.login(credentials);
-      const token = response.data.data;
-      this.token = token;
-      localStorage.setItem("token", token);
+      const { accessToken, refreshToken, firstName, lastName, email } =
+        response.data.data;
+      this.token = accessToken;
+      this.refreshToken = refreshToken;
+      this.user = { firstName, lastName, email };
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+    },
+
+    async refresh() {
+      const response = await authApi.refresh(this.refreshToken);
+      const { accessToken, refreshToken } = response.data.data;
+      this.token = accessToken;
+      this.refreshToken = refreshToken;
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
     },
 
     async register(data) {
@@ -25,8 +39,10 @@ export const useAuthStore = defineStore("auth", {
 
     logout() {
       this.token = null;
+      this.refreshToken = null;
       this.user = null;
       localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
     },
   },
 });
