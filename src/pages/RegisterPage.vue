@@ -100,7 +100,7 @@ async function handleRegister() {
   error.value = null;
   try {
     await authStore.register(form.value);
-    router.push("/login");
+    router.push("/verify-otp");
   } catch (err) {
     error.value =
       err.response?.data?.message || "Registration failed. Please try again.";

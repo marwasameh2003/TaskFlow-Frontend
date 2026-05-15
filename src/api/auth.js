@@ -8,7 +8,9 @@ export const authApi = {
   register(data) {
     return api.post("/auth/register", data);
   },
-
+  verifyOtp(data) {
+    return api.post("/auth/verify-otp", data);
+  },
   refresh(refreshToken) {
     return api.post("/auth/refresh", { refreshToken });
   },

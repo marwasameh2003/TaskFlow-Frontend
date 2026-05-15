@@ -12,12 +12,12 @@ const routes = [
     component: () => import("@/pages/LoginPage.vue"),
     meta: { requiresGuest: true },
   },
-  // {
-  //   path: "/login",
-  //   name: "Login",
-  //   component: () => import("@/pages/loginPage.vue"),
-  //   meta: { requiresGuest: true },
-  // },
+  {
+    path: "/verify-otp",
+    name: "VerifyOtp",
+    component: () => import("@/pages/OtpVerificationPage.vue"),
+    meta: { requiresGuest: true },
+  },
   {
     path: "/register",
     name: "Register",

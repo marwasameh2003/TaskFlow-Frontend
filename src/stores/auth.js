@@ -10,6 +10,7 @@ function parseJwt(token) {
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null,
+    pendingEmail: null,
     token: localStorage.getItem("token") || null,
     refreshToken: localStorage.getItem("refreshToken") || null,
   }),
@@ -50,8 +51,18 @@ export const useAuthStore = defineStore("auth", {
 
     async register(data) {
       await authApi.register(data);
+      this.pendingEmail = data.email;
     },
-
+    async verifyOtp(data) {
+      const response = await authApi.verifyOtp(data);
+      const { accessToken, refreshToken, firstName, lastName, email } =
+        response.data.data;
+      this.token = accessToken;
+      this.refreshToken = refreshToken;
+      this.user = { firstName, lastName, email };
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+    },
     logout() {
       this.token = null;
       this.refreshToken = null;
