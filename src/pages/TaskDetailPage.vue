@@ -75,7 +75,6 @@
           </button>
         </div>
       </div>
-
       <!-- Comments Section -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Comments</h2>
@@ -138,6 +137,53 @@
           </div>
         </div>
       </div>
+
+      <!-- Activity Log — OUTSIDE comments section -->
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6"
+      >
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Activity Log</h2>
+
+        <div v-if="activityLoading" class="text-center text-gray-400 py-4">
+          Loading activity...
+        </div>
+
+        <div
+          v-else-if="activities.length === 0"
+          class="text-center text-gray-400 py-4"
+        >
+          No activity yet.
+        </div>
+
+        <div v-else class="relative">
+          <div class="absolute left-3 top-0 bottom-0 w-px bg-gray-100"></div>
+          <div class="space-y-4">
+            <div
+              v-for="activity in activities"
+              :key="activity.id"
+              class="flex items-start gap-4 pl-8 relative"
+            >
+              <div
+                class="absolute left-0 w-6 h-6 rounded-full bg-primary-100 border-2 border-primary-400 flex items-center justify-center"
+              >
+                <div class="w-2 h-2 rounded-full bg-primary-500"></div>
+              </div>
+              <div class="flex-1 pb-2">
+                <p class="text-sm text-gray-700">{{ activity.description }}</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-gray-400">{{
+                    activity.userName
+                  }}</span>
+                  <span class="text-xs text-gray-300">·</span>
+                  <span class="text-xs text-gray-400">
+                    {{ new Date(activity.createdAt).toLocaleString() }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
   </DashboardLayout>
 </template>
@@ -148,6 +194,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useTasksStore } from "@/stores/tasks";
 import { useCommentsStore } from "@/stores/comments";
 import { useToast } from "@/composables/useToast";
+import { tasksApi } from "@/api/tasks";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 
 const router = useRouter();
@@ -161,37 +208,46 @@ const loading = ref(false);
 const selectedStatus = ref("");
 const newComment = ref("");
 const addingComment = ref(false);
+const activities = ref([]);
+const activityLoading = ref(false);
 
 onMounted(async () => {
   loading.value = true;
   try {
+    // try store first, fall back to API if refreshed directly
     task.value = tasksStore.tasks.find((t) => t.id === route.params.id);
+    if (!task.value) {
+      const response = await tasksApi.getById(route.params.id);
+      task.value = response.data.data;
+    }
     selectedStatus.value = task.value.status;
     await commentsStore.fetchByTask(route.params.id);
+    await fetchActivity();
   } finally {
     loading.value = false;
   }
 });
+async function fetchActivity() {
+  activityLoading.value = true;
+  try {
+    const response = await tasksApi.getActivity(route.params.id);
+    activities.value = response.data.data;
+  } finally {
+    activityLoading.value = false;
+  }
+}
 
 async function handleUpdateStatus() {
   try {
     await tasksStore.updateTaskStatus(route.params.id, selectedStatus.value);
     task.value.status = selectedStatus.value;
     success("Status updated successfully!");
+    await fetchActivity();
   } catch (err) {
     error(err.response?.data?.message || "Failed to update status.");
   }
 }
-async function handleDeleteTask() {
-  if (!confirm("Are you sure you want to delete this task?")) return;
-  try {
-    await tasksStore.deleteTask(route.params.id);
-    success("Task deleted!");
-    router.back();
-  } catch (err) {
-    error(err.response?.data?.message || "Failed to delete task.");
-  }
-}
+
 async function handleAddComment() {
   addingComment.value = true;
   try {
@@ -201,6 +257,7 @@ async function handleAddComment() {
     });
     newComment.value = "";
     success("Comment added!");
+    await fetchActivity();
   } catch (err) {
     error(err.response?.data?.message || "Failed to add comment.");
   } finally {
@@ -216,6 +273,18 @@ async function handleDeleteComment(id) {
     error(err.response?.data?.message || "Failed to delete comment.");
   }
 }
+
+async function handleDeleteTask() {
+  if (!confirm("Are you sure you want to delete this task?")) return;
+  try {
+    await tasksStore.deleteTask(route.params.id);
+    success("Task deleted!");
+    router.back();
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to delete task.");
+  }
+}
+
 function priorityClass(priority) {
   return (
     {
