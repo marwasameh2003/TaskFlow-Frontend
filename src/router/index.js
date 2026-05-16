@@ -54,6 +54,18 @@ const routes = [
     component: () => import("@/pages/AdminPage.vue"),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: () => import("@/pages/ForgotPasswordPage.vue"),
+    meta: { requiresGuest: true },
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("@/pages/ResetPasswordPage.vue"),
+    meta: { requiresGuest: true },
+  },
 ];
 
 const router = createRouter({

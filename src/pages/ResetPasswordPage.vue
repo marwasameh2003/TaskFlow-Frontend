@@ -1,6 +1,13 @@
 <template>
   <AuthLayout>
-    <form @submit.prevent="handleLogin">
+    <div class="text-center mb-6">
+      <h2 class="text-xl font-bold text-gray-800">Reset Password</h2>
+      <p class="text-gray-400 text-sm mt-1">
+        Enter your reset code and new password
+      </p>
+    </div>
+
+    <form @submit.prevent="handleSubmit">
       <div
         v-if="error"
         class="bg-red-50 text-red-500 rounded-lg p-3 mb-4 text-sm border border-red-200"
@@ -20,12 +27,25 @@
         />
       </div>
 
-      <div class="mb-6">
+      <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1"
-          >Password</label
+          >Reset Code</label
         >
         <input
-          v-model="form.password"
+          v-model="form.code"
+          type="text"
+          placeholder="Enter 6-digit code"
+          maxlength="6"
+          class="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-500 placeholder-gray-300 transition text-center text-2xl tracking-widest font-bold"
+        />
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >New Password</label
+        >
+        <input
+          v-model="form.newPassword"
           type="password"
           placeholder="••••••••"
           class="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-500 placeholder-gray-300 transition"
@@ -37,24 +57,15 @@
         :disabled="loading"
         class="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-500 disabled:opacity-50 font-semibold transition"
       >
-        {{ loading ? "Signing in..." : "Sign In" }}
+        {{ loading ? "Resetting..." : "Reset Password" }}
       </button>
 
       <p class="text-center text-sm text-gray-400 mt-6">
-        Don't have an account?
         <RouterLink
-          to="/register"
+          to="/login"
           class="text-primary-600 hover:text-primary-500 font-medium"
         >
-          Register
-        </RouterLink>
-      </p>
-      <p class="text-center text-sm text-gray-400 mt-6">
-        <RouterLink
-          to="/forgot-password"
-          class="text-primary-600 hover:text-primary-500 font-medium"
-        >
-          Forgot your password?
+          Back to Sign In
         </RouterLink>
       </p>
     </form>
@@ -64,24 +75,23 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
+import { authApi } from "@/api/auth";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 
 const router = useRouter();
-const authStore = useAuthStore();
 
-const form = ref({ email: "", password: "" });
+const form = ref({ email: "", code: "", newPassword: "" });
 const loading = ref(false);
 const error = ref(null);
 
-async function handleLogin() {
+async function handleSubmit() {
   loading.value = true;
   error.value = null;
   try {
-    await authStore.login(form.value);
-    router.push("/dashboard");
+    await authApi.resetPassword(form.value);
+    router.push("/login");
   } catch (err) {
-    error.value = err.response?.data?.message || "Invalid email or password.";
+    error.value = err.response?.data?.message || "Invalid or expired code.";
   } finally {
     loading.value = false;
   }

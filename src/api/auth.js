@@ -14,4 +14,11 @@ export const authApi = {
   refresh(refreshToken) {
     return api.post("/auth/refresh", { refreshToken });
   },
+  forgotPassword(email) {
+    return api.post("/auth/forgot-password", { email });
+  },
+
+  resetPassword(data) {
+    return api.post("/auth/reset-password", data);
+  },
 };
