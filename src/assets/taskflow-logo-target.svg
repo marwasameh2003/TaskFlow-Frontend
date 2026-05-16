@@ -1,0 +1,33 @@
+<svg width="680" height="300" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>TaskFlow logo - arrow target</title>
+  <desc>TaskFlow logo featuring an arrow piercing a target</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#1f4a33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Outer ring -->
+  <circle cx="220" cy="150" r="80" fill="none" stroke="#2d6644" stroke-width="6"/>
+  <!-- Middle ring -->
+  <circle cx="220" cy="150" r="55" fill="none" stroke="#4a8c65" stroke-width="5"/>
+  <!-- Inner filled circle -->
+  <circle cx="220" cy="150" r="30" fill="#2d6644"/>
+
+  <!-- Arrow -->
+  <line x1="108" y1="150" x2="268" y2="150" stroke="#1f4a33" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow)"/>
+
+  <!-- Fletching -->
+  <path d="M108 150 L122 142 M108 150 L122 158" fill="none" stroke="#1f4a33" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="220" cy="150" r="8" fill="white"/>
+
+  <!-- Brand name -->
+  <text x="320" y="138" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#2d6644">Task</text>
+  <text x="320" y="195" font-family="Arial, sans-serif" font-size="52" font-weight="300" fill="#4a8c65">Flow</text>
+
+  <!-- Tagline -->
+  <text x="322" y="225" font-family="Arial, sans-serif" font-size="14" fill="#7ab095" letter-spacing="3">MANAGE · TRACK · DELIVER</text>
+</svg>

@@ -4,7 +4,7 @@
 
     <nav class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
       <RouterLink to="/dashboard" class="text-xl font-bold text-primary-600">
-        TaskFlow
+        Taskly
       </RouterLink>
       <div class="flex items-center gap-4">
         <!-- Admin link — only visible to admins -->

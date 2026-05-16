@@ -51,7 +51,6 @@
           @click="router.push(`/tasks/${task.id}`)"
         >
           <div class="flex items-center gap-4">
-            <!-- Priority badge -->
             <span
               :class="priorityClass(task.priority)"
               class="text-xs px-2 py-1 rounded-full font-medium"
@@ -63,14 +62,142 @@
               <p class="text-sm text-gray-400">{{ task.description }}</p>
             </div>
           </div>
-
-          <!-- Status badge -->
           <span
             :class="statusClass(task.status)"
             class="text-xs px-3 py-1 rounded-full font-medium"
           >
             {{ statusLabel(task.status) }}
           </span>
+        </div>
+      </div>
+
+      <!-- Members Section -->
+      <div class="mt-8">
+        <button
+          @click="showMembersSection = !showMembersSection"
+          class="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition text-sm font-medium mb-4"
+        >
+          <span>{{ showMembersSection ? "▼" : "►" }}</span>
+          Team Members ({{ members.length }})
+        </button>
+
+        <div v-if="showMembersSection">
+          <div
+            class="flex justify-end mb-4"
+            v-if="currentUserRole === 'Owner' || currentUserRole === 'Admin'"
+          >
+            <button
+              @click="showAddMemberModal = true"
+              class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-500 text-sm font-medium transition"
+            >
+              + Add Member
+            </button>
+          </div>
+
+          <div v-if="membersLoading" class="text-center text-gray-400 py-4">
+            Loading members...
+          </div>
+
+          <div
+            v-else
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <div
+              v-for="member in members"
+              :key="member.id"
+              class="flex items-center justify-between px-6 py-4 border-b border-gray-50 last:border-0"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-bold"
+                >
+                  {{ member.fullName[0] }}
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">
+                    {{ member.fullName }}
+                  </p>
+                  <p class="text-xs text-gray-400">{{ member.email }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span
+                  :class="{
+                    'bg-primary-50 text-primary-700': member.role === 'Owner',
+                    'bg-blue-50 text-blue-600': member.role === 'Admin',
+                    'bg-gray-100 text-gray-500': member.role === 'Member',
+                  }"
+                  class="text-xs px-2 py-1 rounded-full font-medium"
+                >
+                  {{ member.role }}
+                </span>
+                <button
+                  v-if="
+                    (currentUserRole === 'Owner' ||
+                      currentUserRole === 'Admin') &&
+                    member.role !== 'Owner'
+                  "
+                  @click="handleRemoveMember(member.userId)"
+                  class="text-red-400 hover:text-red-600 text-xs transition"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Member Modal -->
+      <div
+        v-if="showAddMemberModal"
+        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+          <h2 class="text-xl font-bold text-gray-800 mb-6">Add Team Member</h2>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Email</label
+            >
+            <input
+              v-model="newMember.email"
+              type="email"
+              placeholder="member@example.com"
+              class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-500 transition"
+            />
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Role</label
+            >
+            <select
+              v-model="newMember.role"
+              class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-500 transition"
+            >
+              <option value="Member">Member</option>
+              <option value="Admin" v-if="currentUserRole === 'Owner'">
+                Admin
+              </option>
+            </select>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              @click="showAddMemberModal = false"
+              class="flex-1 border border-gray-300 text-gray-600 py-3 rounded-lg hover:bg-gray-50 transition font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleAddMember"
+              :disabled="addingMember"
+              class="flex-1 bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-500 disabled:opacity-50 transition font-medium"
+            >
+              {{ addingMember ? "Adding..." : "Add Member" }}
+            </button>
+          </div>
         </div>
       </div>
     </template>
@@ -159,13 +286,16 @@ import { useRouter, useRoute } from "vue-router";
 import { useProjectsStore } from "@/stores/projects";
 import { useTasksStore } from "@/stores/tasks";
 import { useToast } from "@/composables/useToast";
+import { useAuthStore } from "@/stores/auth";
+import { projectsApi } from "@/api/projects";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
-import SkeletonTask from "@/components/skeletonTask.vue";
+import SkeletonTask from "@/components/SkeletonTask.vue";
 
 const router = useRouter();
 const route = useRoute();
 const projectsStore = useProjectsStore();
 const tasksStore = useTasksStore();
+const authStore = useAuthStore();
 const { success, error } = useToast();
 
 const showCreateModal = ref(false);
@@ -173,23 +303,70 @@ const creating = ref(false);
 const newTask = ref({
   title: "",
   description: "",
-  priority: "2",
+  priority: 2,
   dueDate: "",
   projectId: route.params.id,
 });
 
-// and reset after creation:
-newTask.value = {
-  title: "",
-  description: "",
-  priority: 2,
-  dueDate: "",
-  projectId: route.params.id,
-};
+const members = ref([]);
+const membersLoading = ref(false);
+const showMembersSection = ref(false);
+const showAddMemberModal = ref(false);
+const newMember = ref({ email: "", role: "Member" });
+const addingMember = ref(false);
+const currentUserRole = ref(null);
+
 onMounted(() => {
   projectsStore.fetchProjectById(route.params.id);
   tasksStore.fetchByProject(route.params.id);
+  fetchMembers();
 });
+
+async function fetchMembers() {
+  membersLoading.value = true;
+  try {
+    const response = await projectsApi.getMembers(route.params.id);
+    members.value = response.data.data;
+    // get current user id from token
+    const token = localStorage.getItem("token");
+    if (token) {
+      const payload = JSON.parse(
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
+      const currentUserId = payload.sub;
+      const me = members.value.find((m) => m.userId === currentUserId);
+      currentUserRole.value = me?.role ?? null;
+    }
+  } finally {
+    membersLoading.value = false;
+  }
+}
+
+async function handleAddMember() {
+  addingMember.value = true;
+  try {
+    await projectsApi.addMember(route.params.id, newMember.value);
+    await fetchMembers();
+    showAddMemberModal.value = false;
+    newMember.value = { email: "", role: "Member" };
+    success("Member added successfully!");
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to add member.");
+  } finally {
+    addingMember.value = false;
+  }
+}
+
+async function handleRemoveMember(userId) {
+  if (!confirm("Are you sure you want to remove this member?")) return;
+  try {
+    await projectsApi.removeMember(route.params.id, userId);
+    await fetchMembers();
+    success("Member removed!");
+  } catch (err) {
+    error(err.response?.data?.message || "Failed to remove member.");
+  }
+}
 
 async function handleCreateTask() {
   creating.value = true;
@@ -199,7 +376,7 @@ async function handleCreateTask() {
     newTask.value = {
       title: "",
       description: "",
-      priority: "Medium",
+      priority: 2,
       dueDate: "",
       projectId: route.params.id,
     };
@@ -210,6 +387,7 @@ async function handleCreateTask() {
     creating.value = false;
   }
 }
+
 function priorityLabel(priority) {
   return (
     { 1: "Low", 2: "Medium", 3: "High", 4: "Critical" }[priority] ?? priority

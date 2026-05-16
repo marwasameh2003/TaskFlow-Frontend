@@ -35,7 +35,9 @@ export const useAuthStore = defineStore("auth", {
         response.data.data;
       this.token = accessToken;
       this.refreshToken = refreshToken;
-      this.user = { firstName, lastName, email };
+      // decode id from token
+      const payload = parseJwt(accessToken);
+      this.user = { id: payload.sub, firstName, lastName, email };
       localStorage.setItem("token", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
     },
@@ -59,7 +61,8 @@ export const useAuthStore = defineStore("auth", {
         response.data.data;
       this.token = accessToken;
       this.refreshToken = refreshToken;
-      this.user = { firstName, lastName, email };
+      const payload = parseJwt(accessToken);
+      this.user = { id: payload.sub, firstName, lastName, email };
       localStorage.setItem("token", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
     },

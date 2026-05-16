@@ -19,4 +19,15 @@ export const projectsApi = {
   getArchived() {
     return api.get("/projects/archived");
   },
+  getMembers(projectId) {
+    return api.get(`/projects/${projectId}/members`);
+  },
+
+  addMember(projectId, data) {
+    return api.post(`/projects/${projectId}/members`, data);
+  },
+
+  removeMember(projectId, userId) {
+    return api.delete(`/projects/${projectId}/members/${userId}`);
+  },
 };
